@@ -140,10 +140,7 @@ class ClaimMasterPanel extends FormPanel {
     let totalClaimed = 0;
     let totalApproved = 0;
     let policyNumber;
-    let csuNumber;
-    let tdr;
     var claimCode = this.state.claimCode != null ? this.state.claimCode : "";
-    var CLAIMPROGRAM = !!edited && edited.program != undefined ? edited.program?.nameProgram : "";
     if (edited.items) {
       totalClaimed += edited.items.reduce((sum, r) => sum + claimedAmount(r), 0);
       totalApproved += edited.items.reduce((sum, r) => sum + approvedAmount(r), 0);
@@ -156,33 +153,6 @@ class ClaimMasterPanel extends FormPanel {
     edited.approved = _.round(totalApproved, 2);
 
     let ro = readOnly || !!forReview || !!forFeedback;
-
-    let insureePolicies = edited?.insuree?.insureePolicies?.edges.map((edge) => edge.node) ?? [];
-    
-    insureePolicies.forEach(function (policy) {
-      if (policy.policy.status == 2 && policy.policy.policyNumber != null) {
-        policyNumber = policy.policy.policyNumber;
-      }
-    })
-    if (CLAIMPROGRAM == "Chèque Santé" || CLAIMPROGRAM == "Cheque Santé") {
-      if (edited.code && policyNumber != undefined && policyNumber != "") {
-        claimCode = edited.code.replace(policyNumber, '');
-      }
-    } else {
-      var programCode = !!edited && edited.program != undefined ? edited.program?.code.substring(0, 3) : "";
-      var dateTo = !!edited && edited.dateTo != undefined ? edited.dateTo.substring(0, 4) : "";
-      var codeFosa = !!edited && edited.healthFacility != undefined ? edited.healthFacility?.code : "";
-      csuNumber = `${codeFosa}.${dateTo}.${programCode}.`;
-      if (edited.code && csuNumber != undefined && csuNumber != "") {
-        claimCode = edited.code.replace(csuNumber, '');
-      }
-    }
-    if (edited.tdr === true) {
-      tdr = "T";
-    } else if (edited.tdr === false) {
-      tdr = "F";
-    }
-
     return (
       <Grid container>
         <ControlledField

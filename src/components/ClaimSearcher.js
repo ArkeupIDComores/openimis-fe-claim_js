@@ -4,9 +4,10 @@ import { connect } from "react-redux";
 import { injectIntl } from "react-intl";
 import _ from "lodash";
 import { withTheme, withStyles } from "@material-ui/core/styles";
-import { IconButton, Typography, Tooltip } from "@material-ui/core";
+import { IconButton, Typography, Tooltip, Badge } from "@material-ui/core";
 import AttachIcon from "@material-ui/icons/AttachFile";
 import TabIcon from "@material-ui/icons/Tab";
+import CheckIcon from "@material-ui/icons/Check";
 import { Searcher } from "@openimis/fe-core";
 import ClaimFilter from "./ClaimFilter";
 import {
@@ -42,6 +43,8 @@ class ClaimSearcher extends Component {
     this.highlightAltInsurees = props.modulesManager.getConf("fe-claim", "claimFilter.highlightAltInsurees", true);
     this.claimAttachments = props.modulesManager.getConf("fe-claim", "claimAttachments", true);
     this.extFields = props.modulesManager.getConf("fe-claim", "extFields", []);
+    this.showOrdinalNumber = props.modulesManager.getConf("fe-claim", "claimForm.showOrdinalNumber", false);
+    this.showPreAuthorization = props.modulesManager.getConf("fe-claim", "showPreAuthorization", false);
   }
 
   canSelectAll = (selection) =>
@@ -75,12 +78,16 @@ class ClaimSearcher extends Component {
       this.setState({ random: null });
     }
     if (!forced.length && !random) {
-      prms.push(`first: ${state.pageSize}`);
+      if (!state.beforeCursor && !state.afterCursor) {
+        prms.push(`first: ${state.pageSize}`);
+      }
       if (!!state.afterCursor) {
         prms.push(`after: "${state.afterCursor}"`);
+        prms.push(`first: ${state.pageSize}`);
       }
       if (!!state.beforeCursor) {
         prms.push(`before: "${state.beforeCursor}"`);
+        prms.push(`last: ${state.pageSize}`);
       }
     }
     return prms;
@@ -114,7 +121,13 @@ class ClaimSearcher extends Component {
                   <b>
                     {formatAmount(
                       this.props.intl,
-                      selection.reduce((acc, v) => (acc + v.claimed ? parseFloat(v.claimed) : 0), 0),
+                      selection.reduce((acc, v) => {
+                        if (v.claimed) {
+                          return acc + parseFloat(v.claimed);
+                        } else {
+                          return acc;
+                        }
+                      }, 0),
                     )}
                   </b>
                 ),
@@ -130,7 +143,13 @@ class ClaimSearcher extends Component {
                   <b>
                     {formatAmount(
                       this.props.intl,
-                      selection.reduce((acc, v) => (acc + v.approved ? parseFloat(v.approved) : 0), 0),
+                      selection.reduce((acc, v) => {
+                        if (v.approved) {
+                          return acc + parseFloat(v.approved);
+                        } else {
+                          return acc;
+                        }
+                      }, 0),
                     )}
                   </b>
                 ),
@@ -163,6 +182,9 @@ class ClaimSearcher extends Component {
       "claimSummaries.approved",
       "claimSummaries.claimStatus",
     ];
+    if (this.showPreAuthorization) {
+      result.push("claim.claimSummaries.pre-authorization");
+    }
     if (this.claimAttachments) {
       result.push("claimSummaries.claimAttachments");
     }
@@ -176,16 +198,24 @@ class ClaimSearcher extends Component {
   };
 
   sorts = () => {
-    var result = [
+    const result = [];
+
+    if (this.showOrdinalNumber) {
+      result.push(null);
+    }
+
+    result.push(
       ["code", true],
       [this.props.modulesManager.getRef("location.HealthFacilityPicker.sort"), true],
       [this.props.modulesManager.getRef("insuree.InsureePicker.sort"), true],
-      ["dateClaimed", false],
+      ["dateClaimed", true],
+      null,
       null,
       null,
       ["claimed", false],
       ["approved", false],
-    ];
+    );
+
     if (this.claimAttachments) {
       result.push(null);
     }
@@ -198,7 +228,7 @@ class ClaimSearcher extends Component {
   };
 
   aligns = () => {
-    return [, , , , , , , "right", "right"];
+    return [, , , , , , , "right", "right", ,];
   };
 
   itemFormatters = () => {
@@ -221,13 +251,17 @@ class ClaimSearcher extends Component {
       (c) => formatAmount(this.props.intl, c.approved),
       (c) => formatMessage(this.props.intl, "claim", `claimStatus.${c.status}`),
     ];
+    if (this.showPreAuthorization) {
+      result.push((c) => (c.preAuthorization ? <CheckIcon /> : ""));
+    }
     if (this.claimAttachments) {
       result.push(
         (c) =>
           !!c.attachmentsCount && (
             <IconButton onClick={(e) => this.setState({ attachmentsClaim: c })}>
-              {" "}
-              <AttachIcon />
+              <Badge badgeContent={c.attachmentsCount ?? 0} color="primary">
+                <AttachIcon />
+              </Badge>
             </IconButton>
           ),
       );
@@ -247,12 +281,23 @@ class ClaimSearcher extends Component {
     ));
     return result;
   };
+
   rowLocked = (selection, claim) => !!claim.clientMutationId;
+
   rowHighlighted = (selection, claim) => !!this.highlightAmount && claim.claimed > this.highlightAmount;
+
   rowHighlightedAlt = (selection, claim) =>
     !!this.highlightAltInsurees &&
     selection.filter((c) => _.isEqual(c.insuree, claim.insuree)).length &&
     !selection.includes(claim);
+
+  isRestoredClaim = (claim) => claim?.restore;
+
+  showRestored = (showRestored) => {
+    this.setState({ showRestored });
+  };
+
+  isClaimNotRestored = (_, claim) => this.state.showRestored && !claim?.restore;
 
   render() {
     const {
@@ -273,8 +318,9 @@ class ClaimSearcher extends Component {
 
     let count = !!this.state.random && this.state.random.value;
     if (!count) {
-      count = claimsPageInfo.totalCount;
+      count = (claimsPageInfo?.totalCount || 0).toLocaleString();
     }
+
     return (
       <Fragment>
         <PublishedComponent
@@ -307,6 +353,7 @@ class ClaimSearcher extends Component {
           rowLocked={this.rowLocked}
           rowHighlighted={this.rowHighlighted}
           rowHighlightedAlt={this.rowHighlightedAlt}
+          rowSecondaryHighlighted={this.isRestoredClaim}
           withSelection="multiple"
           selectionMessage={"claimSummaries.selection.count"}
           preHeaders={this.preHeaders}
@@ -317,6 +364,7 @@ class ClaimSearcher extends Component {
           sorts={this.sorts}
           onDoubleClick={onDoubleClick}
           actionsContributionKey={actionsContributionKey}
+          showOrdinalNumber={this.showOrdinalNumber}
         />
       </Fragment>
     );

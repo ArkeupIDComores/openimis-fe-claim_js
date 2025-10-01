@@ -36,6 +36,7 @@ import SpecialityPicker from "./pickers/SpecialityPicker";
 import PrescriberPicker from "./pickers/PrescriberPicker";
 import PrescriberEditPage from "./pages/PrescriberEditPage";
 import PrescriberReport from "./reports/PrescriberReport";
+import PrescriberFosaReport from "./reports/PrescriberFosaReport";
 
 const ROUTE_HEALTH_FACILITIES = "claim/healthFacilities";
 const ROUTE_CLAIM_EDIT = "claim/healthFacilities/claim";
@@ -81,6 +82,22 @@ const DEFAULT_CONFIG = {
             .filter(hf => hf?.id) // Filtrer les valeurs nulles
             .map(hf => decodeId(hf.id));
         }      
+        console.log(params);
+        return params;
+      },
+    },
+    {
+      key: "prescripteur_FOSA_reporting",
+      component: PrescriberFosaReport,
+      isValid: (values) => 
+        values.hf?.uuid && 
+        values.dateStart && 
+        values.dateEnd ,
+      getParams: (values) => {
+        const params = {}
+        params.hf_uuid = values.hf.uuid;
+        params.date_start = values.dateStart;
+        params.date_end = values.dateEnd;  
         console.log(params);
         return params;
       },

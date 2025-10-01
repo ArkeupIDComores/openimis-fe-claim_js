@@ -72,18 +72,16 @@ const DEFAULT_CONFIG = {
         values.dateStart && 
         values.dateEnd ,
       getParams: (values) => {
-        const params = {};
+        const params = {}
         params.prescriber_uuid = values.prescriber.uuid;
-        params.requested_hf_id = decodeId(values.hf.id);
         params.date_start = values.dateStart;
         params.date_end = values.dateEnd;
-        
-        // Ajouter les établissements de santé autorisés
         if (values.authorizedHealthFacilities?.length > 0) {
           params.authorized_health_facilities = values.authorizedHealthFacilities
             .filter(hf => hf?.id) // Filtrer les valeurs nulles
             .map(hf => decodeId(hf.id));
         }      
+        console.log(params);
         return params;
       },
     },

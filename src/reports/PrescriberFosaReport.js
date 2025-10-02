@@ -38,7 +38,38 @@ const  PrescriberFosaReport = (props) => {
           label={formatMessage("PrescriberReport.hf")}
         />
       </Grid>
-
+      <Grid item>
+        <PublishedComponent
+          pubRef="claim.SpecialityPicker"
+          onChange={(speciality) => setValues({ ...values, speciality })}
+          value={values.speciality}
+          label={formatMessage("PrescriberReport.Speciality")}
+        />
+      </Grid>
+      <Grid item>
+        <PublishedComponent
+          pubRef="claim.StatusPicker"
+          onChange={(status) => setValues({ ...values, status })}
+          value={values.status}
+          label={formatMessage("PrescriberReport.Prescriber.Status")}
+        />
+      </Grid>
+      <Grid item>
+        <PublishedComponent
+          pubRef="claim.ClaimStatusPicker"
+          onChange={(claimStatus) => setValues({ ...values, claimStatus })}
+          value={values.claimStatus}
+          required
+        />
+      </Grid>
+      <Grid item>
+        <PublishedComponent
+          pubRef="claim.ClaimActTypePicker"
+          onChange={(claimActType) => setValues({ ...values, claimActType })}
+          value={values.claimActType}
+          required
+        />
+      </Grid>
     </Grid>
   );
 };

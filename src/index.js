@@ -37,6 +37,7 @@ import PrescriberPicker from "./pickers/PrescriberPicker";
 import PrescriberEditPage from "./pages/PrescriberEditPage";
 import PrescriberReport from "./reports/PrescriberReport";
 import PrescriberFosaReport from "./reports/PrescriberFosaReport";
+import ClaimActTypePicker from "./pickers/ClaimActTypePicker";
 
 const ROUTE_HEALTH_FACILITIES = "claim/healthFacilities";
 const ROUTE_CLAIM_EDIT = "claim/healthFacilities/claim";
@@ -87,7 +88,7 @@ const DEFAULT_CONFIG = {
       },
     },
     {
-      key: "prescripteur_FOSA_reporting",
+      key: "prescripteur_fosa_reporting",
       component: PrescriberFosaReport,
       isValid: (values) => 
         values.hf?.uuid && 
@@ -98,6 +99,10 @@ const DEFAULT_CONFIG = {
         params.hf_uuid = values.hf.uuid;
         params.date_start = values.dateStart;
         params.date_end = values.dateEnd;  
+        params.speciality_uuid= values.speciality?.uuid;
+        params.prescriber_status_code=values.status?.code;
+        params.claim_status=values.claimStatus;
+        params.act_type=values.claimActType;
         console.log(params);
         return params;
       },
@@ -197,6 +202,7 @@ const DEFAULT_CONFIG = {
     { key: "claim.ClaimAdminPicker", ref: ClaimAdminPicker },
     { key: "claim.StatusPicker", ref: StatusPicker },
     { key: "claim.SpecialityPicker", ref: SpecialityPicker },
+    { key: "claim.ClaimActTypePicker", ref: ClaimActTypePicker },
     {
       key: "claim.ClaimAdminPicker.projection",
       ref: [
